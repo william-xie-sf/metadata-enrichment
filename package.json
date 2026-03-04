@@ -1,6 +1,6 @@
 {
   "name": "@salesforce/metadata-enrichment",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A library for handling metadata enrichment",
   "author": "Salesforce",
   "main": "lib/index",
