@@ -21,4 +21,5 @@ export type MetadataTypeAndName = {
 
 export type ComponentEnrichmentStatus = MetadataTypeAndName & {
   message: string;
+  requestId?: string;
 };

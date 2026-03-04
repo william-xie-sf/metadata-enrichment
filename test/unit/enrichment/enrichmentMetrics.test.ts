@@ -32,7 +32,6 @@ describe('EnrichmentMetrics', () => {
       expect(metrics.skipped.count).to.equal(0);
       expect(metrics.skipped.components).to.be.empty;
       expect(metrics.total).to.equal(0);
-      expect(metrics.requestId).to.be.undefined;
     });
   });
 
@@ -43,12 +42,14 @@ describe('EnrichmentMetrics', () => {
         typeName: 'LightningComponentBundle',
         componentName: 'testComponent',
         message: 'Success',
+        requestId: 'req-123',
       };
 
       metrics.addSuccessComponent(component);
 
       expect(metrics.success.count).to.equal(1);
       expect(metrics.success.components).to.include(component);
+      expect(metrics.success.components[0].requestId).to.equal('req-123');
       expect(metrics.total).to.equal(1);
     });
   });
@@ -60,12 +61,14 @@ describe('EnrichmentMetrics', () => {
         typeName: 'LightningComponentBundle',
         componentName: 'testComponent',
         message: 'Failed',
+        requestId: 'req-123',
       };
 
       metrics.addFailComponent(component);
 
       expect(metrics.fail.count).to.equal(1);
       expect(metrics.fail.components).to.include(component);
+      expect(metrics.fail.components[0].requestId).to.equal('req-123');
       expect(metrics.total).to.equal(1);
     });
   });
@@ -77,12 +80,14 @@ describe('EnrichmentMetrics', () => {
         typeName: 'LightningComponentBundle',
         componentName: 'testComponent',
         message: 'Skipped',
+        requestId: 'req-123',
       };
 
       metrics.addSkippedComponent(component);
 
       expect(metrics.skipped.count).to.equal(1);
       expect(metrics.skipped.components).to.include(component);
+      expect(metrics.skipped.components[0].requestId).to.equal('req-123');
       expect(metrics.total).to.equal(1);
     });
   });
@@ -116,33 +121,6 @@ describe('EnrichmentMetrics', () => {
       expect(metrics.fail.count).to.equal(0);
       expect(metrics.total).to.equal(1);
       expect(metrics.success.components[0].componentName).to.equal('component1');
-    });
-
-    it('should set requestId from first record with response.metadata.requestId', () => {
-      const mockComponentType: MetadataType = { name: 'LightningComponentBundle' } as MetadataType;
-      const mockRequestBody: EnrichmentRequestBody = {
-        contentBundles: [],
-        metadataType: METADATA_TYPE_LWC,
-        maxTokens: 50,
-      };
-      const mockResult: EnrichmentResult = { metadataType: 'LightningComponentBundle' } as EnrichmentResult;
-      const records: EnrichmentRequestRecord[] = [
-        {
-          componentName: 'component1',
-          componentType: mockComponentType,
-          requestBody: mockRequestBody,
-          response: {
-            metadata: { durationMs: 100, failureCount: 0, requestId: 'req-abc-123', successCount: 1, timestamp: '' },
-            results: [mockResult],
-          },
-          message: null,
-          status: EnrichmentStatus.SUCCESS as EnrichmentStatus,
-        },
-      ];
-
-      const metrics: EnrichmentMetrics = EnrichmentMetrics.createEnrichmentMetrics(records);
-
-      expect(metrics.requestId).to.equal('req-abc-123');
     });
 
     it('should categorize records without response as fail', () => {
