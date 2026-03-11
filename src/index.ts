@@ -25,7 +25,6 @@ export {
   EnrichmentMetrics,
   EnrichmentRecords,
   EnrichmentStatus,
-  LwcComponentValidator,
 } from './enrichment/index.js';
 export type {
   ContentBundleFile,

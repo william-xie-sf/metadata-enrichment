@@ -14,4 +14,5 @@
  * limitations under the License.
  */
 
-export { LwcComponentValidator } from './lwcComponentValidator.js';
+export { DEFAULT_XML_METADATA_SCHEMA, SALESFORCE_OBJECT_XML_METADATA_SCHEMA } from './schemas.js';
+export type { MetadataTypeXmlSchema, MetadataTypeConfig } from './schemas.js';

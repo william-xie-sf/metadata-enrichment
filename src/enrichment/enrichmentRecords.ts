@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 import type { SourceComponent } from '@salesforce/source-deploy-retrieve';
-import { Messages } from '@salesforce/core/messages';
 
 import type { MetadataTypeAndName } from '../common/types.js';
-import type { EnrichmentRequestRecord } from './enrichmentHandler.js';
-import { EnrichmentStatus } from './enrichmentHandler.js';
-import { COMPONENT_TYPE_VALIDATORS, SUPPORTED_COMPONENT_TYPES } from './constants/component.js';
-
-Messages.importMessagesDirectory(import.meta.dirname);
-const messages = Messages.loadMessages('@salesforce/metadata-enrichment', 'errors');
+import type { EnrichmentRequestRecord } from './constants/api.js';
+import { EnrichmentStatus } from './constants/api.js';
 
 const DEFAULT_REQUEST_BODY: EnrichmentRequestRecord['requestBody'] = {
     contentBundles: [],
-    metadataType: 'Generic',
-    maxTokens: 50,
+    metadataType: 'Generic'
 }
 
 /**
@@ -56,23 +50,13 @@ export class EnrichmentRecords {
     }
   }
 
-  public addSkippedComponents(componentsToSkip: Set<MetadataTypeAndName>): void {
-    for (const component of componentsToSkip) {
-      if (!component.componentName) continue;
-
-      // Check if record already exists
-      const existingRecord = Array.from(this.recordSet).find((r) => r.componentName === component.componentName);
+  public addRecords(records: Set<EnrichmentRequestRecord>): void {
+    for (const record of records) {
+      // Skip if a record for this component already exists
+      const existingRecord = Array.from(this.recordSet).find((r) => r.componentName === record.componentName);
       if (existingRecord) continue;
 
-      // Create a new record for the skipped component
-      this.recordSet.add({
-        componentName: component.componentName,
-        componentType: { name: component.typeName } as SourceComponent['type'],
-        requestBody: DEFAULT_REQUEST_BODY,
-        response: null,
-        message: null,
-        status: EnrichmentStatus.SKIPPED,
-      });
+      this.recordSet.add(record);
     }
   }
 
@@ -107,41 +91,5 @@ export class EnrichmentRecords {
     }
   }
 
-  public generateSkipReasons(
-    componentsToSkip: Set<MetadataTypeAndName>,
-    projectSourceComponents: SourceComponent[]
-  ): void {
-    const sourceComponentMap = new Map<string, SourceComponent>();
-    for (const component of projectSourceComponents) {
-      const componentName = component.fullName ?? component.name;
-      if (componentName) {
-        sourceComponentMap.set(componentName, component);
-      }
-    }
 
-    for (const skip of componentsToSkip) {
-      if (!skip.componentName) continue;
-
-      const record = Array.from(this.recordSet).find((r) => r.componentName === skip.componentName);
-      if (!record || record.status !== EnrichmentStatus.SKIPPED || record.message) continue;
-
-      const sourceComponent = sourceComponentMap.get(skip.componentName);
-      const componentTypeName = sourceComponent?.type?.name ?? '';
-      let message: string;
-      if (!sourceComponent) {
-        message = messages.getMessage('errors.component.not.found');
-      } else if (!SUPPORTED_COMPONENT_TYPES.has(componentTypeName)) {
-        message = messages.getMessage('errors.unsupported.type', [componentTypeName]);
-      } else {
-        const validator = COMPONENT_TYPE_VALIDATORS.get(componentTypeName);
-        if (validator && !validator(sourceComponent)) {
-          message = messages.getMessage('errors.component.configuration.not.found');
-        } else {
-          message = messages.getMessage('errors.unknown');
-        }
-      }
-
-      record.message = message;
-    }
-  }
 }

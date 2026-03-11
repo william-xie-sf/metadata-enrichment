@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-import type { SourceComponent } from '@salesforce/source-deploy-retrieve';
-import { LwcComponentValidator } from '../validators/index.js';
-
-export const LWC_METADATA_TYPE_NAME = 'LightningComponentBundle';
-
-export const SUPPORTED_COMPONENT_TYPES: ReadonlySet<string> = new Set([LWC_METADATA_TYPE_NAME]);
-
-/**
- * Maps component type names to a validator function that determines if the component
- * meets the requirements for enrichment processing.
- * Returns true if the component is valid, false if it should be skipped.
- */
-export const COMPONENT_TYPE_VALIDATORS: ReadonlyMap<string, (component: SourceComponent) => boolean> = new Map([
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  [LWC_METADATA_TYPE_NAME, LwcComponentValidator.validate],
-]);
+export const SOURCE_COMPONENT_TYPE_NAME_SALESFORCE_OBJECT = 'SalesforceObject';
+export const SOURCE_COMPONENT_TYPE_NAME_FLEXIPAGE = 'FlexiPage';
+export const SOURCE_COMPONENT_TYPE_NAME_LIGHTNING_TYPE = 'LightningType';
+export const SOURCE_COMPONENT_TYPE_NAME_LWC = 'LightningComponentBundle';

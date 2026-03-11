@@ -15,9 +15,13 @@
  */
 
 export const SUPPORTED_MIME_TYPES: Record<string, string> = {
-  '.js': 'application/javascript',
-  '.html': 'text/html',
+  '.cls': 'text/plain',
   '.css': 'text/css',
-  '.xml': 'application/xml',
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.md': 'text/markdown',
+  '.txt': 'text/plain',
   '.svg': 'image/svg+xml',
+  '.xml': 'application/xml'
 };

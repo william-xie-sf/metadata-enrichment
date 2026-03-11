@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export type { EnrichmentRequestRecord } from './enrichmentHandler.js';
+export type { EnrichmentRequestRecord } from './constants/api.js';
 export type {
   ContentBundleFile,
   ContentBundle,
@@ -25,8 +25,8 @@ export type {
 } from './types/index.js';
 
 export { API_ENDPOINT_ENRICHMENT, SUPPORTED_MIME_TYPES } from './constants/index.js';
+export { EnrichmentStatus } from './constants/api.js';
 
-export { getMimeTypeFromExtension, EnrichmentHandler, EnrichmentStatus } from './enrichmentHandler.js';
+export { getMimeTypeFromExtension, EnrichmentHandler } from './enrichmentHandler.js';
 export { EnrichmentRecords } from './enrichmentRecords.js';
 export { EnrichmentMetrics } from './enrichmentMetrics.js';
-export { LwcComponentValidator } from './validators/index.js';

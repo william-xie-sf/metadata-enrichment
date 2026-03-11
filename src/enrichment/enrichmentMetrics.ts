@@ -15,8 +15,8 @@
  */
 
 import type { ComponentEnrichmentStatus } from '../common/types.js';
-import type { EnrichmentRequestRecord } from './enrichmentHandler.js';
-import { EnrichmentStatus } from './enrichmentHandler.js';
+import type { EnrichmentRequestRecord } from './constants/api.js';
+import { EnrichmentStatus } from './constants/api.js';
 
 /**
  * A metrics data object for storing the final enrichment results.

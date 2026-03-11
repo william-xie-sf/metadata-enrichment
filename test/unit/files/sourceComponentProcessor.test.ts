@@ -16,6 +16,7 @@
 
 import { expect } from 'chai';
 import type { SourceComponent } from '@salesforce/source-deploy-retrieve';
+import { EnrichmentStatus } from '../../../src/enrichment/constants/api.js';
 import { SourceComponentProcessor } from '../../../src/files/sourceComponentProcessor.js';
 
 function createSourceComponent(name: string, typeName: string, options?: { xml?: string }): SourceComponent {
@@ -44,23 +45,33 @@ describe('SourceComponentProcessor', () => {
       const source = [createSourceComponent('OtherCmp', 'LightningComponentBundle', { xml: 'other.js-meta.xml' })];
       const result = SourceComponentProcessor.getComponentsToSkip(source, ['LightningComponentBundle:MissingCmp'], undefined);
       expect(result.size).to.be.greaterThan(0);
-      const skipNames = Array.from(result).map((r) => r.componentName);
-      expect(skipNames).to.include('MissingCmp');
+      const records = Array.from(result);
+      const missing = records.find((r) => r.componentName === 'MissingCmp');
+      expect(missing).to.not.be.undefined;
+      expect(missing!.status).to.equal(EnrichmentStatus.SKIPPED);
+      expect(missing!.message).to.equal('Component not found in project.');
     });
 
-    it('should include non-LWC component in skip set', () => {
+    it('should include non-LWC component in skip set with unsupported type message', () => {
       const source = [createSourceComponent('MyClass', 'ApexClass')];
       const result = SourceComponentProcessor.getComponentsToSkip(source, ['ApexClass:MyClass'], undefined);
       expect(result.size).to.be.greaterThan(0);
-      const skipEntries = Array.from(result);
-      expect(skipEntries.some((r) => r.componentName === 'MyClass' && r.typeName === 'ApexClass')).to.be.true;
+      const records = Array.from(result);
+      const record = records.find((r) => r.componentName === 'MyClass');
+      expect(record).to.not.be.undefined;
+      expect(record!.componentType.name).to.equal('ApexClass');
+      expect(record!.status).to.equal(EnrichmentStatus.SKIPPED);
+      expect(record!.message).to.equal("Component type 'ApexClass' is not currently supported for enrichment.");
     });
 
-    it('should include LWC without xml in skip set', () => {
+    it('should include LWC without xml in skip set with configuration not found message', () => {
       const source = [createSourceComponent('NoMetaCmp', 'LightningComponentBundle')];
       const result = SourceComponentProcessor.getComponentsToSkip(source, ['LightningComponentBundle:NoMetaCmp'], undefined);
       expect(result.size).to.be.greaterThan(0);
-      expect(Array.from(result).some((r) => r.componentName === 'NoMetaCmp')).to.be.true;
+      const record = Array.from(result).find((r) => r.componentName === 'NoMetaCmp');
+      expect(record).to.not.be.undefined;
+      expect(record!.status).to.equal(EnrichmentStatus.SKIPPED);
+      expect(record!.message).to.equal("The component's metadata configuration file doesn't exist.");
     });
 
     it('should not include wildcard metadata entries in requested (no missing from wildcard)', () => {

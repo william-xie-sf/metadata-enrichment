@@ -18,17 +18,19 @@ import { basename, extname } from 'node:path';
 import type { Connection } from '@salesforce/core';
 import { SfError } from '@salesforce/core';
 import { Messages } from '@salesforce/core/messages';
-import type { MetadataType, SourceComponent } from '@salesforce/source-deploy-retrieve';
-import { FileProcessor } from '../files/index.js';
-import type { FileReadResult } from '../files/index.js';
+import type { SourceComponent } from '@salesforce/source-deploy-retrieve';
+import { FileProcessor } from '../files/fileProcessor.js';
+import type { FileReadResult } from '../files/fileProcessor.js';
 import {
   API_ENDPOINT_ENRICHMENT,
   ENRICHMENT_REQUEST_ENTITY_ENCODING_HEADER,
   SUPPORTED_MIME_TYPES,
   MAP_SOURCE_COMPONENT_TYPE_TO_METADATA_TYPE,
-  METADATA_TYPE_GENERIC,
+  API_METADATA_TYPE_GENERIC,
   SUPPORTED_COMPONENT_TYPES,
+  EnrichmentStatus,
 } from './constants/index.js';
+import type { EnrichmentRequestRecord } from './constants/index.js';
 import type {
   ContentBundleFile,
   ContentBundle,
@@ -39,21 +41,8 @@ import type {
 Messages.importMessagesDirectory(import.meta.dirname);
 const messages = Messages.loadMessages('@salesforce/metadata-enrichment', 'errors');
 
-export enum EnrichmentStatus {
-  NOT_PROCESSED = 'NOT_PROCESSED',
-  SUCCESS = 'SUCCESS',
-  FAIL = 'FAIL',
-  SKIPPED = 'SKIPPED',
-}
-
-export type EnrichmentRequestRecord = {
-  componentName: string;
-  componentType: MetadataType;
-  requestBody: EnrichmentRequestBody | null;
-  response: EnrichMetadataResponse | null;
-  message: string | null;
-  status: EnrichmentStatus;
-};
+export { EnrichmentStatus };
+export type { EnrichmentRequestRecord };
 
 export function getMimeTypeFromExtension(filePath: string): string {
   const ext = extname(filePath).toLowerCase();
@@ -113,7 +102,7 @@ export class EnrichmentHandler {
 
       const contentBundle = EnrichmentHandler.createContentBundle(componentName, files);
       const metadataType =
-        MAP_SOURCE_COMPONENT_TYPE_TO_METADATA_TYPE[component.type?.name ?? ''] ?? METADATA_TYPE_GENERIC;
+        MAP_SOURCE_COMPONENT_TYPE_TO_METADATA_TYPE[component.type?.name ?? ''] ?? API_METADATA_TYPE_GENERIC;
       const requestBody = EnrichmentHandler.createEnrichmentRequestBody(contentBundle, metadataType);
 
       return {
@@ -169,12 +158,11 @@ export class EnrichmentHandler {
 
   private static createEnrichmentRequestBody(
     contentBundle: ContentBundle,
-    metadataType: string = METADATA_TYPE_GENERIC,
+    metadataType: string = API_METADATA_TYPE_GENERIC,
   ): EnrichmentRequestBody {
     return {
       contentBundles: [contentBundle],
-      metadataType,
-      maxTokens: 50,
+      metadataType
     };
   }
 

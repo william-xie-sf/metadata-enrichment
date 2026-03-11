@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-import { RegistryAccess, type SourceComponent } from '@salesforce/source-deploy-retrieve';
+import { RegistryAccess, type SourceComponent, type MetadataType } from '@salesforce/source-deploy-retrieve';
+import { Messages } from '@salesforce/core/messages';
 import type { MetadataTypeAndName } from '../common/types.js';
-import { COMPONENT_TYPE_VALIDATORS, SUPPORTED_COMPONENT_TYPES } from '../enrichment/constants/component.js';
+import type { EnrichmentRequestRecord } from '../enrichment/constants/api.js';
+import { EnrichmentStatus } from '../enrichment/constants/api.js';
+import { SUPPORTED_COMPONENT_TYPES } from '../enrichment/constants/api.js';
+
+Messages.importMessagesDirectory(import.meta.dirname);
+const messages = Messages.loadMessages('@salesforce/metadata-enrichment', 'errors');
 
 export class SourceComponentProcessor {
   /**
@@ -36,7 +42,7 @@ export class SourceComponentProcessor {
     sourceComponents: SourceComponent[],
     metadataEntries: string[],
     projectDir?: string,
-  ): Set<MetadataTypeAndName> {
+  ): Set<EnrichmentRequestRecord> {
     const requestedComponents = SourceComponentProcessor.parseRequestedComponents(metadataEntries, projectDir);
     const missingComponents = SourceComponentProcessor.diffRequestedComponents(sourceComponents, requestedComponents);
     const filteredComponents = SourceComponentProcessor.filterComponents(sourceComponents, requestedComponents);
@@ -45,10 +51,10 @@ export class SourceComponentProcessor {
 
   private static filterComponents(
     sourceComponents: SourceComponent[],
-    requestedComponents: Set<MetadataTypeAndName | null>,
-  ): Set<MetadataTypeAndName> {
+    requestedComponents: Set<MetadataTypeAndName>,
+  ): Set<EnrichmentRequestRecord> {
     const sourceComponentMap = SourceComponentProcessor.createSourceComponentMap(sourceComponents);
-    const filteredComponents = new Set<MetadataTypeAndName>();
+    const filteredComponents = new Set<EnrichmentRequestRecord>();
 
     for (const requestedComponent of requestedComponents) {
       if (!requestedComponent?.componentName) continue;
@@ -61,18 +67,25 @@ export class SourceComponentProcessor {
       // Filter out unsupported component types
       if (!SUPPORTED_COMPONENT_TYPES.has(typeName)) {
         filteredComponents.add({
-          typeName: sourceComponent.type.name,
           componentName: requestedComponent.componentName,
+          componentType: sourceComponent.type,
+          requestBody: null,
+          response: null,
+          message: messages.getMessage('errors.unsupported.type', [typeName]),
+          status: EnrichmentStatus.SKIPPED,
         });
         continue;
       }
 
-      // Run type-specific validation
-      const validator = COMPONENT_TYPE_VALIDATORS.get(typeName);
-      if (validator && !validator(sourceComponent)) {
+      // Filter out supported components missing their metadata file
+      if (sourceComponent.xml === undefined) {
         filteredComponents.add({
-          typeName: sourceComponent.type.name,
           componentName: requestedComponent.componentName,
+          componentType: sourceComponent.type,
+          requestBody: null,
+          response: null,
+          message: messages.getMessage('errors.component.configuration.not.found'),
+          status: EnrichmentStatus.SKIPPED,
         });
       }
     }
@@ -83,12 +96,19 @@ export class SourceComponentProcessor {
   private static diffRequestedComponents(
     sourceComponents: SourceComponent[],
     requestedComponents: Set<MetadataTypeAndName>,
-  ): Set<MetadataTypeAndName> {
+  ): Set<EnrichmentRequestRecord> {
     const existingSourceComponentNames = SourceComponentProcessor.getExistingSourceComponentNames(sourceComponents);
-    const missingComponents = new Set<MetadataTypeAndName>();
+    const missingComponents = new Set<EnrichmentRequestRecord>();
     for (const requestedComponent of requestedComponents) {
       if (requestedComponent.componentName && !existingSourceComponentNames.has(requestedComponent.componentName)) {
-        missingComponents.add(requestedComponent);
+        missingComponents.add({
+          componentName: requestedComponent.componentName,
+          componentType: { name: requestedComponent.typeName } as MetadataType,
+          requestBody: null,
+          response: null,
+          message: messages.getMessage('errors.component.not.found'),
+          status: EnrichmentStatus.SKIPPED,
+        });
       }
     }
     return missingComponents;

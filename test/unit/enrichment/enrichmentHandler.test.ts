@@ -26,7 +26,7 @@ import {
 import {
   ENRICHMENT_REQUEST_ENTITY_ENCODING_HEADER,
   SUPPORTED_MIME_TYPES,
-  METADATA_TYPE_LWC,
+  API_METADATA_TYPE_LWC,
 } from '../../../src/enrichment/constants/index.js';
 import { FileProcessor } from '../../../src/files/index.js';
 import type { FileReadResult } from '../../../src/files/index.js';
@@ -330,8 +330,7 @@ describe('EnrichmentHandler', () => {
       restore();
 
       expect(capturedBody).to.not.be.undefined;
-      expect(capturedBody?.metadataType).to.equal(METADATA_TYPE_LWC);
-      expect(capturedBody?.maxTokens).to.equal(50);
+      expect(capturedBody?.metadataType).to.equal(API_METADATA_TYPE_LWC);
       expect(capturedBody?.contentBundles).to.have.length(1);
     });
 
